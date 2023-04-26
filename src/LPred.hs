@@ -104,20 +104,21 @@ termIgual ((x,y):ts) u v = (x == u && y == v) || (x /= u && y /= v && termIgual 
 
 listIgual :: [(Term,Term)] -> [Term] -> [Term] -> Bool
 listIgual [] x y = False
-listIgual ((x,y):ts) (u:us) (v:vs) = ((termIgual (x,y) u v):(listIgual (x,y) us vs))--|| (x /= v && y /= v && termIgual ts u v)
+listIgual ((x,y):ts) (u:us) (v:vs) = ((termIgual ((x,y):ts) u v) && (listIgual ts us vs))
+      --(x /= v && y /= v && termIgual ts u v)
 
 igual :: [(Term,Term)] -> Formula -> Formula -> Bool
 igual _ _ _ = False
 igual ts Top Top = True
-iguas ts Bottom Bottom = True
+igual ts Bottom Bottom = True
 igual ts (Predicado a xa) (Predicado b xb) = (listIgual ts xa xb)
 igual ts (Not a) (Not b) = (igual ts a b)
-igual ts (And a b) (And c d) = (igual ts a c && igual b d)
-igual ts (Or a b) (Or c d) = (igual ts a c && igual b d)
-igual ts (Iff a b) (Iff c d) = (igual ts a c && igual b d)
-igual ts (Impl a b) (Impl c d) = (igual ts a c && igual b d)
-igual ts (ForAll a b) (ForAll c d) = (igual ((a,c):ts) b d)
-igual ts (Exists a b) (Exists c d) = (igual ((a,c):ts) b d)
+igual ts (And a b) (And c d) = (igual ts a c && igual ts b d)
+igual ts (Or a b) (Or c d) = (igual ts a c && igual ts b d)
+igual ts (Iff a b) (Iff c d) = (igual ts a c && igual ts b d)
+igual ts (Impl a b) (Impl c d) = (igual ts a c && igual ts b d)
+igual ts (ForAll a b) (ForAll c d) = (igual ((ligadas (ForAll a b), ligadas (ForAll a b)):ts) b d)
+igual ts (Exists a b) (Exists c d) = (igual ((ligadas (Exists a b), ligadas (Exists a b)):ts) b d)
 
 --igual :: [(Simbolo,Simbolo)] -> Formula -> Formula -> Bool
 
