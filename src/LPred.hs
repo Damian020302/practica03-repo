@@ -95,6 +95,15 @@ sonAlfaEquiv (Impl a b) (Impl c d) = length(ligadas (Impl a b)) == length(ligada
 sonAlfaEquiv (ForAll a b) (ForAll c d) = length(ligadas (ForAll a b)) == length(ligadas (ForAll c d))
 sonAlfaEquiv (Exists a b) (Exists c d) = length(ligadas (Exists a b)) == length(ligadas (Exists c d))-}
 
+--Funcion auxiliar para sonAlfaEquiv
+--referencia https://cs.stackexchange.com/questions/76616/algorithm-for-deciding-alpha-equivalence-of-terms-in-languages-with-bindings
+varIgual :: [(Simbolo,Simbolo)] -> Simbolo -> Simbolo -> Bool
+varIgual [] x y = (x == y)
+varIgual ((x,y):ligadas) u v = (x == v && y == v) || (x /= v && y /= v && varIgual ligadas u v)
+
+--igual :: [(Simbolo,Simbolo)] -> Formula -> Formula -> Bool
+
+
 renombra :: Formula -> Formula
 renombra (ForAll a b) = if a == "x" then sustv1 (ForAll a b) (a,Var "w")
                       else if a == "y" then sustv1 (ForAll a b) (a,Var "v") else (ForAll a b)
