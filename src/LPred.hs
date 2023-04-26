@@ -85,7 +85,8 @@ sustVar (Func a b) (s,p) = Func a (sustList b (s,p))
 
 --"Se dicen que son alpha-equivalentes syss difieren a los mas en los nombres de las variables ligadas"
 sonAlfaEquiv :: Formula -> Formula -> Bool
-sonAlfaEquiv a b = ligadas a /= ligadas b
+sonAlfaEquiv a b = igual [] a b
+  --ligadas a /= ligadas b
 {-Idea inicial
 sonAlfaEquiv (Not a) (Not b) = length(ligadas (Not a)) == lenth(ligadas (Not b))
 sonAlfaEquiv (And a b) (And c d) = length(ligadas (And a b)) == length(ligadas (And c d))
@@ -97,9 +98,26 @@ sonAlfaEquiv (Exists a b) (Exists c d) = length(ligadas (Exists a b)) == length(
 
 --Funcion auxiliar para sonAlfaEquiv
 --referencia https://cs.stackexchange.com/questions/76616/algorithm-for-deciding-alpha-equivalence-of-terms-in-languages-with-bindings
-varIgual :: [(Simbolo,Simbolo)] -> Simbolo -> Simbolo -> Bool
-varIgual [] x y = (x == y)
-varIgual ((x,y):ligadas) u v = (x == v && y == v) || (x /= v && y /= v && varIgual ligadas u v)
+termIgual :: [(Term,Term)] -> Term -> Term -> Bool
+termIgual [] x y = (x == y)
+termIgual ((x,y):ts) u v = (x == u && y == v) || (x /= u && y /= v && termIgual ts u v)
+
+listIgual :: [(Term,Term)] -> [Term] -> [Term] -> Bool
+listIgual [] x y = False
+listIgual ((x,y):ts) (u:us) (v:vs) = ((termIgual (x,y) u v):(listIgual (x,y) us vs))--|| (x /= v && y /= v && termIgual ts u v)
+
+igual :: [(Term,Term)] -> Formula -> Formula -> Bool
+igual _ _ _ = False
+igual ts Top Top = True
+iguas ts Bottom Bottom = True
+igual ts (Predicado a xa) (Predicado b xb) = (listIgual ts xa xb)
+igual ts (Not a) (Not b) = (igual ts a b)
+igual ts (And a b) (And c d) = (igual ts a c && igual b d)
+igual ts (Or a b) (Or c d) = (igual ts a c && igual b d)
+igual ts (Iff a b) (Iff c d) = (igual ts a c && igual b d)
+igual ts (Impl a b) (Impl c d) = (igual ts a c && igual b d)
+igual ts (ForAll a b) (ForAll c d) = (igual ((a,c):ts) b d)
+igual ts (Exists a b) (Exists c d) = (igual ((a,c):ts) b d)
 
 --igual :: [(Simbolo,Simbolo)] -> Formula -> Formula -> Bool
 
