@@ -1,6 +1,7 @@
 module LPred where
 
 import Data.List
+--import Data.String
 
 data Term = Var String | Func String [Term] deriving (Eq, Show)
 
@@ -117,8 +118,10 @@ igual ts (And a b) (And c d) = (igual ts a c && igual ts b d)
 igual ts (Or a b) (Or c d) = (igual ts a c && igual ts b d)
 igual ts (Iff a b) (Iff c d) = (igual ts a c && igual ts b d)
 igual ts (Impl a b) (Impl c d) = (igual ts a c && igual ts b d)
-igual ts (ForAll a b) (ForAll c d) = (igual ((ligadas (ForAll a b), ligadas (ForAll a b)):ts) b d)
-igual ts (Exists a b) (Exists c d) = (igual ((ligadas (Exists a b), ligadas (Exists a b)):ts) b d)
+igual ts (ForAll a b) (ForAll c d) = (igual ((toString a, toString c):ts) b d)
+  --(igual ((ligadas (ForAll a b), ligadas (ForAll a b)):ts) b d)
+igual ts (Exists a b) (Exists c d) = (igual ((toString a, toString c):ts) b d)
+  --(igual ((ligadas (Exists a b), ligadas (Exists a b)):ts) b d)
 
 --igual :: [(Simbolo,Simbolo)] -> Formula -> Formula -> Bool
 
@@ -144,7 +147,31 @@ sustv2 (ForAll a b) (s,p) = if (elem a [s]) == True then renombra (ForAll a b) e
 sustv2 (Exists a b) (s,p) = if (elem a [s]) == True then renombra (Exists a b) else (Exists a (sustv1 b (s,p)))
 
 unifica :: Formula -> Formula -> [Sustitucion]
-unifica a _ = []
+unifica (Predicado a x) (Predicado b y) = if a == b then inicio x y else error ("No es posible unificar " ++ a ++
+                                                                               " con " ++ b)
+
+inicio :: [Term] -> [Term] -> [Sustitucion]
+inicio (x:xs) (y:ys) = (accQ (x:xs) (y:ys))
+
+accUD :: (Term,Term) -> (Term,Term)
+accUD (a,b) = if a == b then (_,_) else (a,b)
+
+accTC :: (Term,Term) -> Sustitucion
+--accT (Func a x) (Func b y) =
+accT x (Var y) = (y,x)
+accT (Var x) y = (x,y)
+accT x (Var y) = (y,x)
+
+--accQ :: [Term] -> [Term] -> [(Term,Term)]
+accQ :: [Term] -> [Term] -> [Sustitucion]
+accQ [] [] = []
+accQ (x:xs) (y:ys) = accTC(accUD (empareja x y)):(accQ xs ys)
+  
+empareja :: Term -> Term -> (Term,Term)
+empareja _ _ = (_,_)
+empareja x y = (x,y)
+empareja x _ = (x,_)
+empareja _ y = (_,y)  
 
 hayResolvente :: Formula -> Formula -> Bool
 hayResolvente a _ = False
