@@ -86,8 +86,8 @@ sustVar (Func a b) (s,p) = Func a (sustList b (s,p))
 
 --"Se dicen que son alpha-equivalentes syss difieren a los mas en los nombres de las variables ligadas"
 sonAlfaEquiv :: Formula -> Formula -> Bool
-sonAlfaEquiv a b = igual [] a b
-  --ligadas a /= ligadas b
+--sonAlfaEquiv a b = igual [] a b
+sonAlfaEquiv a b = ligadas a /= ligadas b
 {-Idea inicial
 sonAlfaEquiv (Not a) (Not b) = length(ligadas (Not a)) == lenth(ligadas (Not b))
 sonAlfaEquiv (And a b) (And c d) = length(ligadas (And a b)) == length(ligadas (And c d))
@@ -99,7 +99,7 @@ sonAlfaEquiv (Exists a b) (Exists c d) = length(ligadas (Exists a b)) == length(
 
 --Funcion auxiliar para sonAlfaEquiv
 --referencia https://cs.stackexchange.com/questions/76616/algorithm-for-deciding-alpha-equivalence-of-terms-in-languages-with-bindings
-termIgual :: [(Term,Term)] -> Term -> Term -> Bool
+{--termIgual :: [(Term,Term)] -> Term -> Term -> Bool
 termIgual [] x y = (x == y)
 termIgual ((x,y):ts) u v = (x == u && y == v) || (x /= u && y /= v && termIgual ts u v)
 
@@ -123,7 +123,7 @@ igual ts (ForAll a b) (ForAll c d) = (igual ((toString a, toString c):ts) b d)
 igual ts (Exists a b) (Exists c d) = (igual ((toString a, toString c):ts) b d)
   --(igual ((ligadas (Exists a b), ligadas (Exists a b)):ts) b d)
 
---igual :: [(Simbolo,Simbolo)] -> Formula -> Formula -> Bool
+--igual :: [(Simbolo,Simbolo)] -> Formula -> Formula -> Bool-}
 
 
 renombra :: Formula -> Formula
@@ -149,29 +149,41 @@ sustv2 (Exists a b) (s,p) = if (elem a [s]) == True then renombra (Exists a b) e
 unifica :: Formula -> Formula -> [Sustitucion]
 unifica (Predicado a x) (Predicado b y) = if a == b then inicio x y else error ("No es posible unificar " ++ a ++
                                                                                " con " ++ b)
-
+--Aplica el algortimo de unificación en base a las listas de TERMS de los Predicados
 inicio :: [Term] -> [Term] -> [Sustitucion]
 inicio (x:xs) (y:ys) = (accQ (x:xs) (y:ys))
 
+--Operaciones 1 y 2 "Si X=X, se elimina"
 accUD :: (Term,Term) -> (Term,Term)
-accUD (a,b) = if a == b then (_,_) else (a,b)
+accUD (a,b) = if a == b then (Var "",Var "") else (a,b)
+--accUD ((Func a x),(Func b y)) = if a == b then inicio x y else error ("No es posible unificar " ++ a ++ " con " ++ b)
+  --accTC inicio x y else error ("No es posible unificar " ++ a ++ " con " ++ b)
+--accUD ((Func a x),(Var y)) = error ("No es posible unificar")
 
+{--Operaciones 3 y 4 "Si X es una var del lado izquierdo, saca (y efectua) la sustitucion
+Si X es una var del lado derecho, cambia de lado, saca (y efectua) la sustitucion-}
 accTC :: (Term,Term) -> Sustitucion
 --accT (Func a x) (Func b y) =
-accT x (Var y) = (y,x)
-accT (Var x) y = (x,y)
-accT x (Var y) = (y,x)
+accTC (Func a x,Var y) = (y,(Func a x))
+accTC (Var x,Func b y) = (x,(Func b y))
+accTC (Var x,Var y) = (x,(Var y))
+--accT x (Var y) = (y,x)
+
+--La problematica del tipo "f(x)=f(y)"
+--accUD ((Func a x),(Func b y)) = if a == b then inicio x y else error ("No es posible unificar " ++ a ++ " con " ++ b)
 
 --accQ :: [Term] -> [Term] -> [(Term,Term)]
+--Operacion 5, emparejo cada cabeza y hago las operaciones 1, 2, 3 y 4 (creo que aqui puede radicar el problema)
 accQ :: [Term] -> [Term] -> [Sustitucion]
 accQ [] [] = []
-accQ (x:xs) (y:ys) = accTC(accUD (empareja x y)):(accQ xs ys)
-  
+accQ (x:xs) (y:ys) = (accTC(accUD (empareja x y)):(accQ xs ys))
+--accQ ((Func a x),(Func b y)) = if a == b then inicio x y else error ("No es posible unificar " ++ a ++ " con " ++ b)
+
 empareja :: Term -> Term -> (Term,Term)
-empareja _ _ = (_,_)
+--empareja _ _ = (_,_)
 empareja x y = (x,y)
-empareja x _ = (x,_)
-empareja _ y = (_,y)  
+--empareja x _ = (x,_)
+--empareja _ y = (_,y)
 
 hayResolvente :: Formula -> Formula -> Bool
 hayResolvente a _ = False
