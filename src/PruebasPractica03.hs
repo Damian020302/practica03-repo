@@ -61,11 +61,11 @@ prueba18 = sustv2 (ForAll "x" (Exists "y" (Predicado "Q" [(Func "f" [x]),y]))) (
            == (ForAll "x" (Exists "y" (Predicado "Q" [(Func "f" [x]),y])))
 
 -- Ejercicio 7
-prueba19 = unifica (Predicado "Q" [x,y,x]) (Predicado "Q" [(Func "f" [r,w]),(Func "g" [x]),x]) 
+prueba19 = unifica (Predicado "Q" [x,y,x]) (Predicado "Q" [(Func "f" [r,w]),(Func "g" [x]),x])
            == [("x",(Func "f" [r,w])),("y",(Func "g" [(Func "f" [r,w])]))] 
-prueba20 = unifica (Predicado "Q" [(Func "a" []),(Func "c" []),(Func "f" [x])]) (Predicado "Q" [z,(Func "c" []),v]) 
+prueba20 = unifica (Predicado "Q" [(Func "a" []),(Func "c" []),(Func "f" [x])]) (Predicado "Q" [z,(Func "c" []),v])
            == [("z",(Func "a" [])),("v",(Func "f" [x]))]
-prueba21 = unifica (Predicado "P" [(Func "f" [x,y])]) (Predicado "P" [(Func "f" [(Func "a" []),(Func "b" [])])]) 
+prueba21 = unifica (Predicado "P" [(Func "f" [x,y])]) (Predicado "P" [(Func "f" [(Func "a" []),(Func "b" [])])])
            == [("x",(Func "a" [])), ("y",(Func "b" []))]
 
 -- Ejercicio 8

@@ -198,37 +198,47 @@ sustv2 (Impl a b) (s,p) = Impl (sustv2 a (s,p)) (sustv1 b (s,p))
 sustv2 (ForAll a b) (s,p) = if (elem a [s]) == True then renombra (ForAll a b) else (ForAll a (sustv1 b (s,p)))
 sustv2 (Exists a b) (s,p) = if (elem a [s]) == True then renombra (Exists a b) else (Exists a (sustv1 b (s,p)))
 
-unifica :: Formula -> Formula -> [Sustitucion]
-unifica (Predicado a x) (Predicado b y) = if a == b then inicio x y else error ("No es posible unificar " ++ a ++
-                                                                               " con " ++ b)
+--unifica :: Formula -> Formula -> [Sustitucion]
+--unifica (Predicado a x) (Predicado b y) = if (a == b) && (length x == length y) then inicio x y else error ("No es posible unificar " ++ a ++
+                                                                            --   " con " ++ b)
 --Aplica el algortimo de unificación en base a las listas de TERMS de los Predicados
-inicio :: [Term] -> [Term] -> [Sustitucion]
+--inicio :: [Term] -> [Term] -> [Sustitucion]
+inicio :: [Term] -> [Term] -> [(Term,Term)]
 inicio (x:xs) (y:ys) = (accQ (x:xs) (y:ys))
 
---Operaciones 1 y 2 "Si X=X, se elimina"
-accUD :: (Term,Term) -> (Term,Term)
-accUD (a,b) = if a == b then (Var "",Var "") else (a,b)
+--Operacion 1
+accU :: (Term,Term) -> (Term,Term)
+accU (Func a [],Func b []) = if a == b then (Func "" [], Func "" []) else (Func a [],Func b [])
+
+--Operaciones 2
+accD :: (Term,Term) -> (Term,Term)
+accD (Var x,Var y) = if x == y then (Var "",Var "") else (Var x, Var y)
 --accUD ((Func a x),(Func b y)) = if a == b then inicio x y else error ("No es posible unificar " ++ a ++ " con " ++ b)
   --accTC inicio x y else error ("No es posible unificar " ++ a ++ " con " ++ b)
 --accUD ((Func a x),(Var y)) = error ("No es posible unificar")
 
 {--Operaciones 3 y 4 "Si X es una var del lado izquierdo, saca (y efectua) la sustitucion
 Si X es una var del lado derecho, cambia de lado, saca (y efectua) la sustitucion-}
-accTC :: (Term,Term) -> Sustitucion
+accT :: (Term,Term) -> Sustitucion
 --accT (Func a x) (Func b y) =
-accTC (Func a x,Var y) = (y,(Func a x))
-accTC (Var x,Func b y) = (x,(Func b y))
-accTC (Var x,Var y) = (x,(Var y))
+accT (a,Var y) = (y,a)
+--accTC (Var x,Func b y) = (x,(Func b y))
+--accTC (Var x,Var y) = (x,(Var y))
 --accT x (Var y) = (y,x)
+
+--Operacion 4
+accC :: (Term,Term) -> Sustitucion
+accC (Var x,b) = (x,b)
 
 --La problematica del tipo "f(x)=f(y)"
 --accUD ((Func a x),(Func b y)) = if a == b then inicio x y else error ("No es posible unificar " ++ a ++ " con " ++ b)
 
---accQ :: [Term] -> [Term] -> [(Term,Term)]
+accQ :: [Term] -> [Term] -> [(Term,Term)]
 --Operacion 5, emparejo cada cabeza y hago las operaciones 1, 2, 3 y 4 (creo que aqui puede radicar el problema)
-accQ :: [Term] -> [Term] -> [Sustitucion]
+--accQ :: [Term] -> [Term] -> [Sustitucion]
 accQ [] [] = []
-accQ (x:xs) (y:ys) = (accTC(accUD (empareja x y)):(accQ xs ys))
+accQ (x:xs) (y:ys) = (empareja x y) : (accQ xs ys)
+  --(accTC(accUD (empareja x y)):(accQ xs ys))
 --accQ ((Func a x),(Func b y)) = if a == b then inicio x y else error ("No es posible unificar " ++ a ++ " con " ++ b)
 
 empareja :: Term -> Term -> (Term,Term)
