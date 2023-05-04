@@ -84,10 +84,62 @@ sustVar :: Term -> Sustitucion -> Term
 sustVar (Var q) (s,p) = if q == s then p else (Var q)
 sustVar (Func a b) (s,p) = Func a (sustList b (s,p))
 
+variables :: Formula -> [String]
+variables Top = []
+variables Bottom = []
+variables (Predicado _ ts) = (concatMap varsTerminRepe ts )
+variables (Not p) = variables p
+variables (And p q) = variables p ++ variables q
+variables (Or p q) = variables p ++ variables q
+variables (Iff p q) = variables p ++ variables q
+variables (Impl p q) = variables p ++ variables q
+variables (ForAll a b) = [a] ++ variables b
+variables (Exists a b) = [a] ++ variables b
+
+varsTerminRepe :: Term -> [String]
+varsTerminRepe (Var v) = [v]
+varsTerminRepe (Func _ t) = concatMap varsTerminRepe t
+
+
+sustGrosera :: Formula -> Sustitucion -> Formula
+sustGrosera Top (s,p) = Top
+sustGrosera Bottom (s,p) = Bottom
+sustGrosera (Predicado a (t:ts)) (s,p) = Predicado a (sustList (t:ts) (s,p))
+sustGrosera (Not a) (s,p) = Not (sustGrosera a (s,p))
+sustGrosera (And a b) (s,p) = (sustGrosera a (s,p)) `And` (sustGrosera b (s,p))
+sustGrosera (Or a b) (s,p) = (sustGrosera a (s,p)) `Or` (sustGrosera b (s,p))
+sustGrosera (Iff a b) (s,p) = (sustGrosera a (s,p)) `Iff` (sustGrosera b (s,p))
+sustGrosera (Impl a b) (s,p) = (sustGrosera a (s,p)) `Impl` (sustGrosera b (s,p))
+sustGrosera (ForAll a b) (s,(Var p))
+  | ( a == s ) = ForAll a (sustGrosera b (s,(Var p)))
+  | otherwise = ForAll p (sustGrosera b (s,(Var p)))
+sustGrosera (Exists a b) (s,(Var p))
+  | ( a == s ) = Exists a (sustGrosera b (s,(Var p)))
+  | otherwise = Exists p (sustGrosera b (s,(Var p)))
+--sustGrosera (ForAll a b) (s,p) = if ( a == s ) then (ForAll a b) else (ForAll s (sustGrosera b (s,p)))
+--sustGrosera (Exists a b) (s,p) = if ( a == s ) then (Exists a b) else (Exists s (sustGrosera b (s,p)))
+
+sustitucionesGroseras :: Formula -> [Sustitucion] -> Formula
+sustitucionesGroseras f [] = f
+sustitucionesGroseras f [x] = sustGrosera f x
+sustitucionesGroseras f (x:xs) = sustitucionesGroseras (sustGrosera f x) xs
+
+crearSustitutos :: [String] -> [String] -> [Sustitucion]
+crearSustitutos [] [] = []
+crearSustitutos [a] [b]
+  | a==b = []
+  | otherwise = [(b,Var a)]
+crearSustitutos (a:as) (b:bs) = crearSustitutos as bs `union` crearSustitutos [a] [b]
+
+
 --"Se dicen que son alpha-equivalentes syss difieren a los mas en los nombres de las variables ligadas"
 sonAlfaEquiv :: Formula -> Formula -> Bool
---sonAlfaEquiv a b = igual [] a b
-sonAlfaEquiv a b = ligadas a /= ligadas b
+sonAlfaEquiv f1 f2
+  | length (ligadas f1) /= length (ligadas f2) = False
+  | otherwise = f1 == sustitucionesGroseras f2 (crearSustitutos (variables f1) (variables f2))
+
+
+
 {-Idea inicial
 sonAlfaEquiv (Not a) (Not b) = length(ligadas (Not a)) == lenth(ligadas (Not b))
 sonAlfaEquiv (And a b) (And c d) = length(ligadas (And a b)) == length(ligadas (And c d))
